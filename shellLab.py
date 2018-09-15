@@ -3,49 +3,87 @@
 import os, sys, time, re
 
 pid = os.getpid()
-#os.write(1, ("type>").encode())
 userIn = " "
 
 #would i have to put everything inside this loop so the shell continues to repeat?
-#while (userIn == " " or userIn == ""):
-while (userIn != "exit"):
+while (userIn == " " or userIn == "" and userIn != "exit"):
+#while (userIn != "exit"):
   os.write(1, ("type>").encode())
   userIn = input('')
-  os.write(1, ("The user inputted %s \n" %userIn).encode())
-  #so from here take in a string and seperate based on white space
+  #os.write(1, ("The user inputted %s \n" %userIn).encode())
+  #so from here take in user input and seperate based on white space
+  userArgs = userIn.split();
+  print (userArgs)
 
-  os.write(1, ("ABOUT TO FORK (pid:%d)\n" % pid).encode())
+  #conditional that looks for >,<,| and then appropriately does something
+  #run through all directories for the first option and see if you find anything
+  
+
+os.write(1, ("ABOUT TO FORK (pid:%d)\n" % pid).encode())
 rc = os.fork()
 
 #Error for fork
 if rc < 0:
-    os.write(2, ("fork failed, returning %d\n" % rc).encode())
-    sys.exit(1)
+  os.write(2, ("fork failed, returning %d\n" % rc).encode())
+  sys.exit(1)
 
-#inherits anything already taken in before this point
-#so here I would execute whatever is typed and then after i would kill and return
+#execute what is asked for in the parent
 elif rc == 0:                   # child
 
-    os.write(1, ("I am in child and can see the input:%s \n" %userIn).encode())
-    os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" % 
+   #so inside here i get conditionals for >,<,| and then adjust accordingly
+  #conditionals should be set before i start searching?
+  
+  #time.sleep(2)
+  #for the sake of min requirements do i need to even find the index
+  #or once found can I assume it is in the second position
+  if ">" in userArgs:
+    print("> detected")
+    print("index is", userArgs.index(">"))
+          
+  if "<" in userArgs:
+    print("< detected")
+    print("index is", userArgs.index("<"))
+          
+  if "|" in userArgs:
+    print("| detected")
+    print("index is", userArgs.index("|"))
+          
+  os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" % 
                  (os.getpid(), pid)).encode())
 
-    args = ["wc", "p4-redirect.py"]
-    for dir in re.split(":", os.environ['PATH']): # try each directory in the path
-        program = "%s/%s" % (dir, args[0])
-        os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
-        try:
-            os.execve(program, args, os.environ) # try to exec program
-        except FileNotFoundError:             # ...expected
-            pass                              # ...fail quietly
+  args = ["wc", "declaration.txt"]
 
-    #args2 = ["p1-fork.py" , "wordCount.txt"]
-    #os.execve("wordCount" ,args2, os.environ)
-    os.write(1, ("Child:    Could not exec %s\n" % args[0]).encode())
-    sys.exit(1)                 # terminate with error
+  #looks for built in command
+  for dir in re.split(":", os.environ['PATH']): # try each directory in the path
+    program = "%s/%s" % (dir, args[0])          #set to the directore+filename
+    os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+
+    try:
+      os.execve(program, args, os.environ) # try to exec program
+
+    except FileNotFoundError:             # ...expected
+      pass                              # ...fail quietly
+    
+  #looks for input file if not a built in command
+  for dir in re.split(":", os.environ['PATH']): # try each directory in the path
+    print ("now looking for exe")
+    program = "%s/%s" % (dir, args[0])          #set to the directore+filename
+    os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+
+    try:
+      os.execve(program, args, os.environ) # try to exec program
+
+    except FileNotFoundError:             # ...expected
+      pass                              # ...fail quietly
+
+    
+ 
+  #if file not found, exit with error.
+  os.write(1, ("Child:    Could not exec %s\n" % args[0]).encode())
+  sys.exit(1)                 # terminate with error
 
 else:                           # parent (forked ok)
 
-    os.write(1, ("I am parent after forking.  My pid=%d.  Child's pid=%d\n" % (pid, rc)).encode())
+  os.write(1, ("I am parent after forking.  My pid=%d.  Child's pid=%d\n" % (pid, rc)).encode())
 
 
