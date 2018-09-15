@@ -36,14 +36,18 @@ elif rc == 0:                   # child
   #time.sleep(2)
   #for the sake of min requirements do i need to even find the index
   #or once found can I assume it is in the second position
+
+  #store left's output to right's file
   if ">" in userArgs:
     print("> detected")
     print("index is", userArgs.index(">"))
-          
+
+  #use right file as input for the left's  
   if "<" in userArgs:
     print("< detected")
     print("index is", userArgs.index("<"))
-          
+
+   #use left file's output as the input for the right 
   if "|" in userArgs:
     print("| detected")
     print("index is", userArgs.index("|"))
@@ -75,7 +79,6 @@ elif rc == 0:                   # child
 
     except FileNotFoundError:             # ...expected
       pass                              # ...fail quietly
-
     
  
   #if file not found, exit with error.
