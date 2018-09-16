@@ -39,15 +39,18 @@ elif rc == 0:                   # child
 
   #store left's output to right's file
   if ">" in userArgs:
-    print("> detected")
-    print("index is", userArgs.index(">"))
+    #print(">, args 1 executes, arg2 stores")
+    print("input file is ", userArgs[(userArgs.index(">"))-1])
+    print("output file is ", userArgs[(userArgs.index(">"))+1])
 
   #use right file as input for the left's  
   if "<" in userArgs:
     print("< detected")
     print("index is", userArgs.index("<"))
 
-   #use left file's output as the input for the right 
+   #use left file's output as the input for the right
+   #for piping, you must have 2 children?? one to execute the left
+   #and the other to take that output as input for the right
   if "|" in userArgs:
     print("| detected")
     print("index is", userArgs.index("|"))
