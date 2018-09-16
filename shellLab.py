@@ -38,13 +38,16 @@ elif rc == 0:                   # child
   #or once found can I assume it is in the second position
 
   #store left's output to right's file
+  ioType = -1
   if ">" in userArgs:
     #print(">, args 1 executes, arg2 stores")
+    ioType = 0
     print("input file is ", userArgs[(userArgs.index(">"))-1])
     print("output file is ", userArgs[(userArgs.index(">"))+1])
 
   #use right file as input for the left's  
   if "<" in userArgs:
+    ioType = 1
     print("< detected")
     print("index is", userArgs.index("<"))
 
@@ -52,6 +55,7 @@ elif rc == 0:                   # child
    #for piping, you must have 2 children?? one to execute the left
    #and the other to take that output as input for the right
   if "|" in userArgs:
+    ioType = 2
     print("| detected")
     print("index is", userArgs.index("|"))
           
@@ -71,17 +75,27 @@ elif rc == 0:                   # child
     except FileNotFoundError:             # ...expected
       pass                              # ...fail quietly
     
-  #looks for input file if not a built in command
-  for dir in re.split(":", os.environ['PATH']): # try each directory in the path
-    print ("now looking for exe")
-    program = "%s/%s" % (dir, args[0])          #set to the directore+filename
-    os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+ #for -1 ioType, do not do anything besides running proram
+ #for 0 ioType, store output in righthand file
+ if (ioType = 0):
+    os.close(1)                 # redirect child's stdout
+    sys.stdout = open(userArgs[(userArgs.index(">"))+1], "w")
+    fd = sys.stdout.fileno() # os.open("p4-output.txt", os.O_CREAT)
+    os.set_inheritable(fd, True)
+    os.write(2, ("Child: opened fd=%d for writing\n" % fd).encode())
 
-    try:
-      os.execve(program, args, os.environ) # try to exec program
+    for dir in re.split(":", os.environ['PATH']): # try each directory in path
+        program = "%s/%s" % (dir, userArgs[(userArgs.index(">"))-1])
+        try:
+            os.execve(program, args, os.environ) # try to exec program
+        except FileNotFoundError:             # ...expected
+            pass                              # ...fail quietly 
 
-    except FileNotFoundError:             # ...expected
-      pass                              # ...fail quietly
+    os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
+    sys.exit(1)                 # terminate with error
+
+ #for 1 ioType, use righthand file as input for lefthand file
+ #for 2 ioType, use rightHand output as input for righthand file
     
  
   #if file not found, exit with error.
