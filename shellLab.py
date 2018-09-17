@@ -75,8 +75,8 @@ elif rc == 0:                   # child
     except FileNotFoundError:             # ...expected
       pass                              # ...fail quietly
     
- #for -1 ioType, do not do anything besides running proram
  #for 0 ioType, store output in righthand file
+ #store left's output to right's file
  if (ioType = 0):
     os.close(1)                 # redirect child's stdout
 
@@ -98,8 +98,9 @@ elif rc == 0:                   # child
     sys.exit(1)                 # terminate with error
 
  #for 1 ioType, use righthand file as input for lefthand file
- if (ioType = 1):
-    args = [userArgs[(userArgs.index(">"))-1], userArgs[(userArgs.index(">"))+1]]
+ #use right file as input for the left's
+ elif (ioType = 1):
+    args = [userArgs[(userArgs.index("<"))-1], userArgs[(userArgs.index("<"))+1]]
     for dir in re.split(":", os.environ['PATH']): # try each directory in the path
         program = "%s/%s" % (dir, args[0])
         os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
@@ -111,8 +112,25 @@ elif rc == 0:                   # child
     os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
     sys.exit(1)                 # terminate with error
 
- #for 2 ioType, use rightHand output as input for righthand file
-    
+ #for 2 ioType, use leftHand output as input for righthand file
+ #use left file's output as the input for the right
+ #for piping, you must have 2 children?? one to execute the left
+ #and the other to take that output as input for the right
+ elif (ioType = 2):
+   args = [userArgs[(userArgs.index(">"))-1], userArgs[(userArgs.index(">"))+1]]
+    for dir in re.split(":", os.environ['PATH']): # try each directory in the path
+        program = "%s/%s" % (dir, args[0])
+        os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+        try:
+            os.execve(program, args, os.environ) # try to exec program
+        except FileNotFoundError:             # ...expected
+            pass                              # ...fail quietly
+
+    os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
+    sys.exit(1)                 # terminate with error
+ #for -1 ioType, do not do anything besides running proram
+ else:
+     
  
   #if file not found, exit with error.
   os.write(1, ("Child:    Could not exec %s\n" % args[0]).encode())
