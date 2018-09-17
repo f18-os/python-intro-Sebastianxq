@@ -79,6 +79,8 @@ elif rc == 0:                   # child
  #for 0 ioType, store output in righthand file
  if (ioType = 0):
     os.close(1)                 # redirect child's stdout
+
+    #open the output file for writing
     sys.stdout = open(userArgs[(userArgs.index(">"))+1], "w")
     fd = sys.stdout.fileno() # os.open("p4-output.txt", os.O_CREAT)
     os.set_inheritable(fd, True)
