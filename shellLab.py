@@ -29,14 +29,9 @@ if rc < 0:
 
 #execute what is asked for in the parent
 elif rc == 0:                   # child
-
-   #so inside here i get conditionals for >,<,| and then adjust accordingly
-  #conditionals should be set before i start searching?
   
-  #time.sleep(2)
-  #for the sake of min requirements do i need to even find the index
-  #or once found can I assume it is in the second position
-
+  #time.sleep(2) #but for what purpose
+  
   #store left's output to right's file
   ioType = -1
   if ">" in userArgs:
@@ -46,7 +41,7 @@ elif rc == 0:                   # child
     print("output file is ", userArgs[(userArgs.index(">"))+1])
 
   #use right file as input for the left's  
-  if "<" in userArgs:
+  elif "<" in userArgs:
     ioType = 1
     print("< detected")
     print("index is", userArgs.index("<"))
@@ -54,7 +49,7 @@ elif rc == 0:                   # child
    #use left file's output as the input for the right
    #for piping, you must have 2 children?? one to execute the left
    #and the other to take that output as input for the right
-  if "|" in userArgs:
+  elif "|" in userArgs:
     ioType = 2
     print("| detected")
     print("index is", userArgs.index("|"))
@@ -62,33 +57,28 @@ elif rc == 0:                   # child
   os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" % 
                  (os.getpid(), pid)).encode())
 
-  args = ["wc", "declaration.txt"]
-
-  #looks for built in command
-  for dir in re.split(":", os.environ['PATH']): # try each directory in the path
-    program = "%s/%s" % (dir, args[0])          #set to the directore+filename
-    os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
-
-    try:
-      os.execve(program, args, os.environ) # try to exec program
-
-    except FileNotFoundError:             # ...expected
-      pass                              # ...fail quietly
-    
- #for 0 ioType, store output in righthand file
- #store left's output to right's file
- if (ioType = 0):
+  args2 = ["wc", "declaration.txt"]
+  #can store everything in the lefthand side as args???
+  
+  #for >/0 ioType, store output in righthand file
+  #store left's output to right's file
+  if (ioType == 0):
+    args = userArgs[0:(userArgs.index(">"))]
+    #print(args)
     os.close(1)                 # redirect child's stdout
-
+    
     #open the output file for writing
+    
     sys.stdout = open(userArgs[(userArgs.index(">"))+1], "w")
     fd = sys.stdout.fileno() # os.open("p4-output.txt", os.O_CREAT)
     os.set_inheritable(fd, True)
     os.write(2, ("Child: opened fd=%d for writing\n" % fd).encode())
 
     #finds lefthandfile to execute
+    #NEED TO MAKE IT SO THAT THE ENTIRE LEF TIS ARGS AND THE RIGHT IS INPUT!!
+    #if there is a slash it would exec directory ./ can work for it
     for dir in re.split(":", os.environ['PATH']): # try each directory in path
-        program = "%s/%s" % (dir, userArgs[(userArgs.index(">"))-1])
+        program = "%s/%s" % (dir, userArgs[0])
         try:
             os.execve(program, args, os.environ) # try to exec program
         except FileNotFoundError:             # ...expected
@@ -97,10 +87,27 @@ elif rc == 0:                   # child
     os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
     sys.exit(1)                 # terminate with error
 
- #for 1 ioType, use righthand file as input for lefthand file
- #use right file as input for the left's
- elif (ioType = 1):
-    args = [userArgs[(userArgs.index("<"))-1], userArgs[(userArgs.index("<"))+1]]
+  #for </1 ioType, use righthand file as input for lefthand file
+  #use right file as input for the left's
+  elif (ioType == 1):
+     args = [userArgs[(userArgs.index("<"))-1], userArgs[(userArgs.index("<"))+1]]
+     for dir in re.split(":", os.environ['PATH']): # try each directory in the path
+        program = "%s/%s" % (dir, args[0])
+        os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+        try:
+            os.execve(program, args, os.environ) # try to exec program
+        except FileNotFoundError:             # ...expected
+            pass                              # ...fail quietly
+
+     os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
+     sys.exit(1)                 # terminate with error
+
+  #for |/2 ioType, use leftHand output as input for righthand file
+  #use left file's output as the input for the right
+  #for piping, you must have 2 children?? one to execute the left
+  #and the other to take that output as input for the right
+  elif (ioType == 2):
+    args = [userArgs[(userArgs.index(">"))-1], userArgs[(userArgs.index(">"))+1]]
     for dir in re.split(":", os.environ['PATH']): # try each directory in the path
         program = "%s/%s" % (dir, args[0])
         os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
@@ -111,26 +118,9 @@ elif rc == 0:                   # child
 
     os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
     sys.exit(1)                 # terminate with error
-
- #for 2 ioType, use leftHand output as input for righthand file
- #use left file's output as the input for the right
- #for piping, you must have 2 children?? one to execute the left
- #and the other to take that output as input for the right
- elif (ioType = 2):
-   args = [userArgs[(userArgs.index(">"))-1], userArgs[(userArgs.index(">"))+1]]
-    for dir in re.split(":", os.environ['PATH']): # try each directory in the path
-        program = "%s/%s" % (dir, args[0])
-        os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
-        try:
-            os.execve(program, args, os.environ) # try to exec program
-        except FileNotFoundError:             # ...expected
-            pass                              # ...fail quietly
-
-    os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
-    sys.exit(1)                 # terminate with error
- #for -1 ioType, do not do anything besides running proram
- else:
-     
+  #for -1 ioType, do not do anything besides running proram
+  else:
+     print("do nothing or run the command")  
  
   #if file not found, exit with error.
   os.write(1, ("Child:    Could not exec %s\n" % args[0]).encode())
