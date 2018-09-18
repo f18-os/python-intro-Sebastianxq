@@ -66,7 +66,6 @@ elif rc == 0:                   # child
     args = userArgs[0:(userArgs.index(">"))]
     #print(args)
     os.close(1)                 # redirect child's stdout
-    
     #open the output file for writing
     
     sys.stdout = open(userArgs[(userArgs.index(">"))+1], "w")
@@ -90,17 +89,20 @@ elif rc == 0:                   # child
   #for </1 ioType, use righthand file as input for lefthand file
   #use right file as input for the left's
   elif (ioType == 1):
-     args = [userArgs[(userArgs.index("<"))-1], userArgs[(userArgs.index("<"))+1]]
-     for dir in re.split(":", os.environ['PATH']): # try each directory in the path
-        program = "%s/%s" % (dir, args[0])
+    args = userArgs[0]+" "+userArgs[(userArgs.index("<")+1)]
+    args = args.split()
+    print(args)
+    #args = [userArgs[(userArgs.index("<"))-1], userArgs[(userArgs.index("<"))+1]]
+    for dir in re.split(":", os.environ['PATH']): # try each directory in the path
+        program = "%s/%s" % (dir, userArgs[0])
         os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
         try:
             os.execve(program, args, os.environ) # try to exec program
         except FileNotFoundError:             # ...expected
             pass                              # ...fail quietly
 
-     os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
-     sys.exit(1)                 # terminate with error
+    os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
+    sys.exit(1)                 # terminate with error
 
   #for |/2 ioType, use leftHand output as input for righthand file
   #use left file's output as the input for the right
