@@ -65,7 +65,6 @@ while ( (userIn == " " or userIn == "") and userIn != "exit"):
   
     #for >/0 ioType, store output in righthand file
     #store left's output to right's file
-    #need to incorperate execution of python files
     if (ioType == 0):
       args = userArgs[0:(userArgs.index(">"))]
       #print(args)
@@ -115,12 +114,19 @@ while ( (userIn == " " or userIn == "") and userIn != "exit"):
         try:
           os.execve(program, args, os.environ) # try to exec program
         except FileNotFoundError:             # ...expected
-             program = "./"+ userArgs[0]
-             st = os.stat(program)
-             os.chmod(program, st.st_mode | stat.S_IEXEC)
-             os.execve(program,args,os.environ) 
-             #os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
+             pass 
 
+      if (succesfulRun == 0):
+        try:
+          program = "./"+ userArgs[0]
+          st = os.stat(program)
+          os.chmod(program, st.st_mode | stat.S_IEXEC)
+          os.execve(program,args,os.environ) 
+          os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
+        except FileNotFoundError:
+          pass
+
+      os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
       sys.exit(1)                 # terminate with error
 
     #for |/2 ioType, use leftHand output as input for righthand file
