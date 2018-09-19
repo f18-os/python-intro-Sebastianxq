@@ -60,15 +60,13 @@ while ( (userIn == " " or userIn == "") and userIn != "exit"):
     os.write(1, ("Child: My pid==%d.  Parent's pid=%d\n" % 
                  (os.getpid(), pid)).encode())
     args2 = ["wc", "declaration.txt"]
+    succesfulRun = 0
     #can store everything in the lefthand side as args???
   
     #for >/0 ioType, store output in righthand file
     #store left's output to right's file
     #need to incorperate execution of python files
     if (ioType == 0):
-      path = '.'
-      hmm = os.listdir(path)
-      print(hmm)
       args = userArgs[0:(userArgs.index(">"))]
       #print(args)
       os.close(1)                 # redirect child's stdout
@@ -80,21 +78,26 @@ while ( (userIn == " " or userIn == "") and userIn != "exit"):
       os.write(2, ("Child: opened fd=%d for writing\n" % fd).encode())
 
       #finds lefthandfile to execute
-      #NEED TO MAKE IT SO THAT THE ENTIRE LEF TIS ARGS AND THE RIGHT IS INPUT!!
-      #if there is a slash it would exec directory ./ can work for it
+      
       for dir in re.split(":", os.environ['PATH']): # try each directory in path
          program = "%s/%s" % (dir, userArgs[0])
          try:
            os.execve(program, args, os.environ) # try to exec program
+         #need to add exceptuion for if THAT file isnt found
          except FileNotFoundError:             # ...expected
-           #try
-             program = "./"+ userArgs[0]
-             st = os.stat(program)
-             os.chmod(program, st.st_mode | stat.S_IEXEC)
-             os.execve(program,args,os.environ)
-           #except:
-            # pass                              # ...fail quietly 
-             os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
+           pass
+
+      if (succesfulRun == 0):
+        try:
+          program = "./"+ userArgs[0]
+          st = os.stat(program)
+          os.chmod(program, st.st_mode | stat.S_IEXEC)
+          os.execve(program,args,os.environ) 
+          os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
+        except FileNotFoundError:
+          pass
+        
+      os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
       sys.exit(1)                 # terminate with error
 
     #for </1 ioType, use righthand file as input for lefthand file
@@ -105,15 +108,19 @@ while ( (userIn == " " or userIn == "") and userIn != "exit"):
       args = args.split()
       print(args)
       #args = [userArgs[(userArgs.index("<"))-1], userArgs[(userArgs.index("<"))+1]]
+      # need to seperate
       for dir in re.split(":", os.environ['PATH']): # try each directory in the path
         program = "%s/%s" % (dir, userArgs[0])
         os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
         try:
           os.execve(program, args, os.environ) # try to exec program
         except FileNotFoundError:             # ...expected
-          pass                              # ...fail quietly
+             program = "./"+ userArgs[0]
+             st = os.stat(program)
+             os.chmod(program, st.st_mode | stat.S_IEXEC)
+             os.execve(program,args,os.environ) 
+             #os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
 
-      os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
       sys.exit(1)                 # terminate with error
 
     #for |/2 ioType, use leftHand output as input for righthand file
