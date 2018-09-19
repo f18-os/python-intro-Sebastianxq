@@ -1,6 +1,7 @@
 #! /usr/bin/env python3
 
 import os, sys, time, re
+import stat #for changing file permissions
 
 pid = os.getpid()
 userIn = " "
@@ -86,9 +87,14 @@ while ( (userIn == " " or userIn == "") and userIn != "exit"):
          try:
            os.execve(program, args, os.environ) # try to exec program
          except FileNotFoundError:             # ...expected
-           pass                              # ...fail quietly 
-
-      os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
+           #try
+             program = "./"+ userArgs[0]
+             st = os.stat(program)
+             os.chmod(program, st.st_mode | stat.S_IEXEC)
+             os.execve(program,args,os.environ)
+           #except:
+            # pass                              # ...fail quietly 
+             os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
       sys.exit(1)                 # terminate with error
 
     #for </1 ioType, use righthand file as input for lefthand file
