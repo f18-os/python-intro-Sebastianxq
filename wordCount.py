@@ -1,17 +1,34 @@
-#counts the number of times a word appears in a file and outputs it into a text file
-#
+#! /usr/bin/env python3
+import sys              #cmd line args
+import re               #regex tools
+import os               #for checking if file is found
+import subprocess       # for executions
+
+# set input and output files
+if len(sys.argv) is not 3:
+    print("Correct usage: wordCountTest.py <input text file> <output file> <solution key file>")
+    exit()
 
 #takes in a file and prints it to the terminal
 #need to convert into an open ended input
-inputFile = open(r"C:\Users\Seabass\Desktop\OSPython\nets-python-intro-master\declaration.txt")
+inputFile = sys.argv[1] 
+outputFile = sys.argv[2]
+filename = str(inputFile)
+outputName = str(outputFile)
+print (filename,outputName)
 
+inputSource = open(filename, 'r')
+outputSource = open(outputName, 'w')
+
+#with open(inputSource, 'r') as preInfo:
+   
 #removes capitalizations from text file
-inputPre = inputFile.read()
-lowercaseInput = inputPre.lower()
-#lowercaseInput is currently a STRING
 
-#debugging
-#print (lowercaseInput)
+inputPre = inputSource.read()
+lowercaseInput = inputPre.lower()
+
+    #debugging
+    #print (lowercaseInput)
 
 
 #removes all punctuation in the text file
@@ -24,16 +41,15 @@ for char in lowercaseInput:
 #inputPost is currently a STRING
 
 #debugging
-print inputPost
+print (inputPost)
 
 testSplit = inputPost.split() #seperates words, by default .split is whitespace
 #testSplit is currently a LIST
 
-#convert to a set but then count the set item number of appearences in the list before you converted to a set?!?!?
 sortedWords = sorted(testSplit)
 #sortedWords is currently a LIST
 
-singleSortedWords = set(sortedWords) #converts to a set to remove duplicates
+singleSortedWords = set(sortedWords) 
 singleSortedWords = sorted(singleSortedWords)
 #singleSortedWords is currently a LIST
 
@@ -43,60 +59,27 @@ singleSortedWords = sorted(singleSortedWords)
 output = open("output.txt", "w+")
 
 for word in singleSortedWords:
-    #print word,inputPost.count(word)
-    #numWords = inputPost.count(word)
-
-    #count is experiencing an error but WHY
-    #try to make a conditional that checks for whether its EOL or not
+    
     wordBuff = word
     wordBlank = word + " "
-    #word is not at the end of line
-    #an issue is that it counts even words that end with a with a blank space!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
-    #use another buffer for the actual count
+    #if word is not at the end of the line
     if inputPost.count(wordBlank) > 0:
-       # wordBlank = word + " "
         word += " "
         word += str(inputPost.count(wordBlank))
         word += " "
-        print word
+        print (word)
         word +="\n"
+        
     #word is at the end of line
     else:
         wordBuff += "\n"
         word += " "
         count = inputPost.count(wordBuff)+inputPost.count(word)
-        print count," is count"
+        print (count," is count")
         word += str(count)
         word += " "
         word += "\n"
-    output.write(word)
+    outputSource.write(word)
 
-    # if inputPost.count(word) == 0:
-
-    # reads every instance of a word occurance
-    # if a is looked for it will return EACH A THAT APPEARS IN THE DOCUMENT
-    # finalCount = str(inputPost.count(word))
-    # finalWord = word+" "+finalCount
-    # print finalWord
-    # finalOutput = finalWord+'\n'
-    # output.write(finalOutput)
-
-#works except it prints EACH instance of an item instead of just one and the total
-#for item in sorted(testSplit):
- #   print item,inputPost.count(item)
-#counts how many times a word appears and then stores it into a counter
-#str(result.count("sentence"))
-
-
-
-#---------------------------------------------------------------------------------------------------------
-#example of calculating the total number of words and the total number of occurance
-#mystring = "This sentence is a simple sentence."
-#result = mystring.split()
-#print result
-#print "The total number of words is: "  + str(len(result))
-#print "The word 'sentence' occurs: " + str(result.count("sentence"))
-#---------------------------------------------------------------------------------------------------------
-
-inputFile.close()
-output.close()
+inputSource.close()
+outputSource.close()
