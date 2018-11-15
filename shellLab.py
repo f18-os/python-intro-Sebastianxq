@@ -10,13 +10,11 @@ pr,pw = os.pipe()
 for f in (pr, pw):
   os.set_inheritable(f, True)
 print("pipe fds: pr=%d, pw=%d" % (pr, pw))
-#type(fileinput)
+
 import fileinput #for piping
 
-while ( (userIn == " " or userIn == "") and userIn != "exit"):
-
-#works but kinda glitchy
-#while (userIn != "exit"):
+#while ( (userIn == " " or userIn == "") and userIn != "exit"):
+while (userIn != "exit"):
   os.write(1, ("type>").encode())
   userIn = input('')
   
@@ -95,7 +93,7 @@ while ( (userIn == " " or userIn == "") and userIn != "exit"):
         try:
           os.execve(program, args, os.environ) # try to exec program
         except FileNotFoundError:             # ...expected
-             pass 
+          pass 
 
       if (succesfulRun == 0):
         try:
@@ -143,9 +141,26 @@ while ( (userIn == " " or userIn == "") and userIn != "exit"):
       #args = ["wc", "p3-exec.py"]
 
     
-    else:
-      print("no IO")
-    
+      else:
+        for dir in re.split(":", os.environ['PATH']): # try each directory in the path
+          program = "%s/%s" % (dir, userArgs[0])
+          #os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
+          try:
+            os.execve(program, args, os.environ) # try to exec program
+          except FileNotFoundError:             # ...expected
+            pass 
+
+        if (succesfulRun == 0):
+          try:
+            program = "./"+ userArgs[0]
+            st = os.stat(program)
+            os.chmod(program, st.st_mode | stat.S_IEXEC)
+            os.execve(program,args,os.environ) 
+          
+          except FileNotFoundError:
+            pass
+        print("program execution failed")
+        sys.exit(1)
     
   else:                           # parent (forked ok)
     #print("Parent: My pid==%d.  Child's pid=%d" % (os.getpid(), rc), file=sys.stderr)
@@ -156,6 +171,5 @@ while ( (userIn == " " or userIn == "") and userIn != "exit"):
     os.dup(pr)
     for fd in (pw, pr):
         os.close(fd)
-   # for line in fileinput.input()
-    #        print("From child: <%s>" % line)
-
+    #for line in fileinput.input()
+      #print("From child: <%s>" % line)
