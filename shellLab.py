@@ -2,6 +2,7 @@
 
 import os, sys, time, re
 import stat #for changing file permissions
+import fileinput #for piping
 
 pid = os.getpid()
 userIn = " "
@@ -10,8 +11,6 @@ pr,pw = os.pipe()
 for f in (pr, pw):
   os.set_inheritable(f, True)
 print("pipe fds: pr=%d, pw=%d" % (pr, pw))
-
-import fileinput #for piping
 
 #while ( (userIn == " " or userIn == "") and userIn != "exit"):
 while (userIn != "exit"):
@@ -48,15 +47,12 @@ while (userIn != "exit"):
                  (os.getpid(), pid)).encode())
     args2 = ["wc", "declaration.txt"]
     succesfulRun = 0
-    #can store everything in the lefthand side as args???
   
     #for >/0 ioType, store leftHandoutput in righthand file
     if (ioType == 0):
       args = userArgs[0:(userArgs.index(">"))]
-      #print(args)
       os.close(1)                 # redirect child's stdout
-      #open the output file for writing
-      sys.stdout = open(userArgs[(userArgs.index(">"))+1], "w")
+      sys.stdout = open(userArgs[(userArgs.index(">"))+1], "w") #open output file
       fd = sys.stdout.fileno() # os.open("p4-output.txt", os.O_CREAT)
       os.set_inheritable(fd, True)
       os.write(2, ("Child: opened fd=%d for writing\n" % fd).encode())
@@ -76,11 +72,13 @@ while (userIn != "exit"):
           os.chmod(program, st.st_mode | stat.S_IEXEC)
           os.execve(program,args,os.environ) 
         except FileNotFoundError:
+          print ("file nout found")
           pass
         
       os.write(2, ("Child:    Could not exec %s\n" % args[0]).encode())
       sys.exit(1)                 # terminate with error
 
+      
     #for </1 ioType, use righthand file as input for lefthand file
     elif (ioType == 1):
       args = userArgs[0]+" "+userArgs[(userArgs.index("<")+1)]
@@ -109,11 +107,9 @@ while (userIn != "exit"):
 
     #for pipe '|' ioType, use leftHand output as input for righthand file
     elif (ioType == 2):
-      #print("in pipe child: My pid==%d.  Parent's pid=%d" % (os.getpid(), pid), file=sys.stderr)
       os.close(1)                 # redirect child's stdout
       args = userArgs[0]+" "+userArgs[(userArgs.index("|")+1)]
       args = args.split()
-      #print(args)
 
       os.dup(pw)
       for fd in (pr, pw):
@@ -123,7 +119,6 @@ while (userIn != "exit"):
 
       for dir in re.split(":", os.environ['PATH']): # try each directory in the path
         program = "%s/%s" % (dir, userArgs[0])
-        #os.write(1, ("Child:  ...trying to exec %s\n" % program).encode())
         try:
           os.execve(program, args, os.environ) # try to exec program
         except FileNotFoundError:             # ...expected
@@ -138,7 +133,6 @@ while (userIn != "exit"):
           #os.write(2, ("Child:    Error: Could not exec %s\n" % args[0]).encode())
         except FileNotFoundError:
           pass
-      #args = ["wc", "p3-exec.py"]
 
     
       else:
@@ -163,13 +157,8 @@ while (userIn != "exit"):
         sys.exit(1)
     
   else:                           # parent (forked ok)
-    #print("Parent: My pid==%d.  Child's pid=%d" % (os.getpid(), rc), file=sys.stderr)
-    #os.write(1, ("I am parent after forking.  My pid=%d.  Child's pid=%d\n" % (pid, rc)).encode())
-
     print("Parent: My pid==%d.  Child's pid=%d" % (os.getpid(), rc), file=sys.stderr)
     os.close(0)
     os.dup(pr)
     for fd in (pw, pr):
         os.close(fd)
-    #for line in fileinput.input()
-      #print("From child: <%s>" % line)
